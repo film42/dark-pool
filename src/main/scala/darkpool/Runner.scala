@@ -1,6 +1,5 @@
-/**
- * Created by: film42 on: 1/14/15.
- */
+package darkpool
+
 object Runner extends App {
 
   def checkArguments(args: Array[String] = args): Boolean = {

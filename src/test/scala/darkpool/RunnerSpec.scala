@@ -1,3 +1,5 @@
+package darkpool
+
 import org.scalatest.FunSpec
 
 class RunnerSpec extends FunSpec {
