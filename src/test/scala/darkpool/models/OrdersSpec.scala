@@ -12,7 +12,7 @@ class OrdersSpec extends FunSpec with Matchers {
       val randomUUID = UUID.randomUUID()
       val askLimitOrder = AskLimitOrder(3.5, 300.00, randomUUID)
 
-      askLimitOrder.created_at should be > (DateTime.now - 1.second)
+      askLimitOrder.createdAt should be > (DateTime.now - 1.second)
       askLimitOrder.id shouldBe randomUUID
       askLimitOrder.threshold shouldBe 300.00
       askLimitOrder.quantity shouldBe 3.5
@@ -24,16 +24,19 @@ class OrdersSpec extends FunSpec with Matchers {
     }
   }
 
-  describe("BidDayOrder") {
+  describe("BidMarketOrder") {
     it("can be created with correct params") {
-      val bidDayOrder = BidDayOrder(3.5, 300.00, UUID.randomUUID())
-      bidDayOrder.expires_at.hourOfDay shouldBe 24.hours.from(DateTime.now).hourOfDay()
-      bidDayOrder.expires_at.dayOfMonth shouldBe (DateTime.now + 1.day).dayOfMonth
+      val randomUUID = UUID.randomUUID()
+      val bidMarketOrder = BidMarketOrder(3.5, randomUUID)
+
+      bidMarketOrder.createdAt should be > (DateTime.now - 1.second)
+      bidMarketOrder.id shouldBe randomUUID
+      bidMarketOrder.quantity shouldBe 3.5
     }
 
-    it("can match a BidOrder trait") {
-      val bidDayOrder = BidDayOrder(3.5, 300.00, UUID.randomUUID())
-      assert(bidDayOrder.isInstanceOf[BidOrder])
+    it("extends an BidOrder trait") {
+      val bidMarketOrder = BidMarketOrder(3.5, UUID.randomUUID())
+      assert(bidMarketOrder.isInstanceOf[BidOrder])
     }
   }
 }
