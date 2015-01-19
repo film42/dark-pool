@@ -5,58 +5,61 @@ import java.util.UUID
 import darkpool.models.common._
 
 package object orders {
+
   //
   // Order Traits
   //
   trait OrderType
-
-  trait AskOrder extends OrderType
-  trait BidOrder extends OrderType
-
-  trait Order extends Quantity with CreatedAt with ID
-
+  trait BuyOrder extends OrderType
+  trait SellOrder extends OrderType
+  trait Order extends Quantity with CreatedAt with ID {
+    def decreasedBy(quantity: Double): Order
+    def crossesAt(quantity: Double): Boolean
+  }
   trait Threshold {
     def threshold: Double
   }
 
-  trait MarketOrder extends Order
-  trait LimitOrder extends Order with Threshold
-  trait StopOrder extends Order with Threshold
-
   //
-  // Order Type Implementations
+  // Order Implementations
   //
-  case class AskMarketOrder(orderQuantity: Double, orderId: UUID) extends MarketOrder with AskOrder {
+  case class MarketOrder(orderQuantity: Double, orderId: UUID)
+    extends Order {
+
     override def id: UUID = orderId
     override def quantity: Double = orderQuantity
+    // Market orders accept any price
+    override def crossesAt(quantity: Double): Boolean = true
+    override def decreasedBy(quantity: Double): MarketOrder =
+      MarketOrder(orderQuantity - quantity, orderId)
   }
 
-  case class BidMarketOrder(orderQuantity: Double, orderId: UUID) extends MarketOrder with BidOrder {
-    override def id: UUID = orderId
-    override def quantity: Double = orderQuantity
-  }
+  case class LimitOrder(orderQuantity: Double, orderThreshold: Double, orderId: UUID)
+    extends Order with Threshold {
 
-  case class AskLimitOrder(orderQuantity: Double, orderThreshold: Double, orderId: UUID) extends LimitOrder with AskOrder {
     override def quantity: Double = orderQuantity
     override def threshold: Double = orderThreshold
     override def id: UUID = orderId
+    // FIXME: Add Buy/ Sell distinction here
+    override def crossesAt(quantity: Double): Boolean = {
+      false
+    }
+    override def decreasedBy(quantity: Double): LimitOrder =
+      LimitOrder(orderQuantity - quantity, orderThreshold, orderId)
   }
 
-  case class BidLimitOrder(orderQuantity: Double, orderThreshold: Double, orderId: UUID) extends LimitOrder with BidOrder {
+  case class StopOrder(orderQuantity: Double, orderThreshold: Double, orderId: UUID)
+    extends Order with Threshold {
+
     override def quantity: Double = orderQuantity
     override def threshold: Double = orderThreshold
     override def id: UUID = orderId
+    // FIXME: Add Buy/ Sell distinction here
+    override def crossesAt(quantity: Double): Boolean = {
+      false
+    }
+    override def decreasedBy(quantity: Double): StopOrder =
+      StopOrder(orderQuantity - quantity, orderThreshold, orderId)
   }
 
-  case class AskStopOrder(orderQuantity: Double, orderThreshold: Double, orderId: UUID) extends StopOrder with AskOrder {
-    override def quantity: Double = orderQuantity
-    override def threshold: Double = orderThreshold
-    override def id: UUID = orderId
-  }
-
-  case class BidStopOrder(orderQuantity: Double, orderThreshold: Double, orderId: UUID) extends StopOrder with BidOrder {
-    override def quantity: Double = orderQuantity
-    override def threshold: Double = orderThreshold
-    override def id: UUID = orderId
-  }
 }
