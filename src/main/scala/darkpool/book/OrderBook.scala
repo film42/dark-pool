@@ -2,17 +2,21 @@ package darkpool.book
 
 import darkpool.models.orders._
 
-class OrderBook[+O <: OrderType](ob: O) {
+class OrderBook[+O <: OrderType](orderType: OrderType) {
   private type ThresholdType = (Double, List[Order])
 
   private var marketBook: List[Order] = Nil
   private var limitBook: List[ThresholdType] = Nil
-  private val priceOrdering = if(this.isInstanceOf[SellOrder]) Ordering[Double] else Ordering[Double].reverse
+  private val priceOrdering = orderType match {
+    case SellOrder => Ordering[Double]
+    case BuyOrder => Ordering[Double].reverse
+    case _ => throw new IllegalStateException("Unknown priceOrdering type for Book.")
+  }
 
   def add(order: Order) {
     order match {
-      case limitOrder @ LimitOrder(_, _, _) => addOrderWithThreshold(limitOrder)
-      case MarketOrder(_, _) => marketBook = marketBook :+ order
+      case limitOrder @ LimitOrder(_, _, _, _) => addOrderWithThreshold(limitOrder)
+      case MarketOrder(_, _, _) => marketBook = marketBook :+ order
       case _ => throw new IllegalArgumentException("Order not supported!")
     }
   }
@@ -74,8 +78,8 @@ class OrderBook[+O <: OrderType](ob: O) {
 
     // Match on order type and update that book
     order match {
-      case LimitOrder(_, _, _) => limitBook = insert(limitBook)
-      case StopOrder(_, _, _) => throw new NotImplementedError("Not implemented")
+      case LimitOrder(_, _, _, _) => limitBook = insert(limitBook)
+      case StopOrder(_, _, _, _) => throw new NotImplementedError("Not implemented")
       case _ => throw new IllegalArgumentException("No such threshold type order!")
     }
   }

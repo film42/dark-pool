@@ -6,9 +6,12 @@ import darkpool.book.OrderBook
 import darkpool.models.Trade
 import darkpool.models.orders._
 
-class MatchingEngine(buyOrderBook: OrderBook[BuyOrder], sellOrderBook: OrderBook[SellOrder]) {
-  val system = ActorSystem("dark-pool")
-  val ledger = system.actorOf(Props[LedgerActor])
+class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell]) {
+  private val system = ActorSystem("dark-pool")
+  private val ledger = system.actorOf(Props[LedgerActor])
+
+  // TODO: Expose this via Ledger Actor
+  var trades = List[Trade]()
 
   private var _referencePrice: Option[Double] = None
 
@@ -19,8 +22,8 @@ class MatchingEngine(buyOrderBook: OrderBook[BuyOrder], sellOrderBook: OrderBook
   }
 
   def getBooks(orderType: OrderType): (OrderBook[OrderType], OrderBook[OrderType]) = orderType match {
-    case _: BuyOrder => (buyOrderBook, sellOrderBook)
-    case _: SellOrder => (sellOrderBook, buyOrderBook)
+    case BuyOrder => (buyOrderBook, sellOrderBook)
+    case SellOrder => (sellOrderBook, buyOrderBook)
   }
 
   def acceptOrder(order: Order) {
@@ -37,7 +40,8 @@ class MatchingEngine(buyOrderBook: OrderBook[BuyOrder], sellOrderBook: OrderBook
         case None => Some(order)
         case Some(trade) =>
           counterBook.decreaseTopBy(trade.quantity)
-          ledger ! trade
+          // ledger ! trade // FIXME: don't send to akka right now
+          trades = trades :+ trade
           val unfilledOrder = order.decreasedBy(trade.quantity)
           tryMatch(unfilledOrder, counterBook)
       }
@@ -49,23 +53,23 @@ class MatchingEngine(buyOrderBook: OrderBook[BuyOrder], sellOrderBook: OrderBook
   private def tryMatchWithTop(order: Order, top: Order): Option[Trade] = {
     def trade(price: Double): Option[Trade] = {
       _referencePrice = Some(price)
-      val (buy, sell) = if (order.orderType.isInstanceOf[BuyOrder]) (order, top) else (top, order)
+      val (buy, sell) = if (order.orderType.isInstanceOf[Buy]) (order, top) else (top, order)
       Some(Trade(buy.id, sell.id, price, math.min(buy.quantity, sell.quantity)))
     }
 
     lazy val oppositeBestLimit: Option[Double] = {
-      val oppositeBook = if (order.orderType.isInstanceOf[BuyOrder]) sellOrderBook else buyOrderBook
+      val oppositeBook = if (order.orderType.isInstanceOf[Buy]) sellOrderBook else buyOrderBook
       oppositeBook.bestLimit
     }
 
     (order, top) match {
       // There is a top limit order we can match anything with
-      case (_, topLimitOrder @ LimitOrder(_, _, _)) =>
+      case (_, topLimitOrder @ LimitOrder(_, _, _, _)) =>
         if(order.crossesAt(topLimitOrder.threshold)) trade(topLimitOrder.threshold)
         else None
 
       // Match a limit order with a market order
-      case (limitOrder @ LimitOrder(_, _, _), MarketOrder(_, _)) =>
+      case (limitOrder @ LimitOrder(_, _, _, _), MarketOrder(_, _, _)) =>
         val limitThreshold = oppositeBestLimit match {
           case Some(threshold) => if (order.crossesAt(threshold)) threshold else limitOrder.threshold
           case None => limitOrder.threshold
@@ -73,7 +77,7 @@ class MatchingEngine(buyOrderBook: OrderBook[BuyOrder], sellOrderBook: OrderBook
         trade(limitThreshold)
 
       // Match a market order with a market order
-      case (MarketOrder(_, _), MarketOrder(_, _)) =>
+      case (MarketOrder(_, _, _), MarketOrder(_, _, _)) =>
         val limitThreshold = oppositeBestLimit match {
           case Some(threshold) => threshold
           case None => _referencePrice match {
