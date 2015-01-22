@@ -5,7 +5,7 @@ import java.util.UUID
 import darkpool.models.orders._
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
-class OrderBookSpec extends FunSpec with Matchers with BeforeAndAfter {
+class OrderBookLimitOrdersSpec extends FunSpec with Matchers with BeforeAndAfter {
   var orderBookBuy = new OrderBook(BuyOrder)
   var orderBookSell = new OrderBook(SellOrder)
 

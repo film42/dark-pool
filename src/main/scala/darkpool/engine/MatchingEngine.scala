@@ -13,12 +13,12 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
   // TODO: Expose this via Ledger Actor
   var trades = List[Trade]()
 
-  private var _referencePrice: Option[Double] = None
+  private var marketReferencePrice: Option[Double] = None
 
-  def referencePrice = _referencePrice.get
+  def referencePrice = marketReferencePrice.get
 
   def referencePrice_=(price: Double) {
-    _referencePrice = Some(price)
+    marketReferencePrice = Some(price)
   }
 
   def getBooks(orderType: OrderType): (OrderBook[OrderType], OrderBook[OrderType]) = orderType match {
@@ -52,7 +52,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
   // FIXME: This is nasty code
   private def tryMatchWithTop(order: Order, top: Order): Option[Trade] = {
     def trade(price: Double): Option[Trade] = {
-      _referencePrice = Some(price)
+      marketReferencePrice = Some(price)
       val (buy, sell) = if (order.orderType.isInstanceOf[Buy]) (order, top) else (top, order)
       Some(Trade(buy.id, sell.id, price, math.min(buy.quantity, sell.quantity)))
     }
@@ -80,7 +80,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
       case (MarketOrder(_, _, _), MarketOrder(_, _, _)) =>
         val limitThreshold = oppositeBestLimit match {
           case Some(threshold) => threshold
-          case None => _referencePrice match {
+          case None => marketReferencePrice match {
             case Some(price) => price
             case None => throw new IllegalStateException("Can't execute trade with two market orders without best limit or reference price")
           }
