@@ -73,13 +73,4 @@ package object orders {
       StopOrder(orderType, orderQuantity - quantity, orderThreshold, orderId)
   }
 
-  case class CancelOrder(orderType: OrderType, orderId: UUID)
-    extends Order {
-
-    override def decreasedBy(quantity: Double): CancelOrder = CancelOrder(orderType, orderId)
-    override def crossesAt(price: Double): Boolean = true
-    override def quantity: Double = 0.0
-    override def id: UUID = orderId
-  }
-
 }
