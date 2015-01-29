@@ -18,20 +18,20 @@ class MatchingEngineReferencePriceSpec extends FunSpec with Matchers with Before
 
   describe("Updating Reference Price From Open") {
     it("maintains reference price as trades occur") {
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 11, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 11, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 11, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 11, UUID.randomUUID(), UUID.randomUUID()))
 
       matchingEngine.trades.size shouldBe 1
       matchingEngine.referencePrice shouldBe 11
 
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 12, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 12, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       matchingEngine.trades.size shouldBe 2
       matchingEngine.referencePrice shouldBe 12
 
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       matchingEngine.trades.size shouldBe 3
       matchingEngine.referencePrice shouldBe 12

@@ -22,8 +22,8 @@ class MatchingEngineCancelOrdersSpec  extends FunSpec with Matchers with BeforeA
     }
 
     it("will delete an order than has not been fulfilled") {
-      val buyOrder = LimitOrder(BuyOrder, 200, 10.5, UUID.randomUUID())
-      val sellOrder = LimitOrder(SellOrder, 200, 100.5, UUID.randomUUID())
+      val buyOrder = LimitOrder(BuyOrder, 200, 10.5, UUID.randomUUID(), UUID.randomUUID())
+      val sellOrder = LimitOrder(SellOrder, 200, 100.5, UUID.randomUUID(), UUID.randomUUID())
 
       matchingEngine.acceptOrder(buyOrder)
       matchingEngine.acceptOrder(sellOrder)

@@ -16,62 +16,62 @@ class OrderBookLimitOrdersSpec extends FunSpec with Matchers with BeforeAndAfter
 
   describe("Price and time priority of limit orders") {
     it("can add a single limit order to the BUY order book") {
-      val order = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID())
+      val order = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
       orderBookBuy.add(order)
       orderBookBuy.orders.size shouldBe 1
       orderBookBuy.top.get shouldBe order
     }
 
     it("can add two limit orders to the BUY order book, with more aggressive order first") {
-      val order1 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID())
-      val order2 = LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID())
+      val order1 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
+      val order2 = LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID())
       orderBookBuy.add(order1)
       orderBookBuy.add(order2)
       orderBookBuy.orders shouldBe List(order1, order2)
     }
 
     it("can add two limit orders to the BUY order book, with less aggressive order first") {
-      val order1 = LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID())
-      val order2 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID())
+      val order1 = LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID())
+      val order2 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
       orderBookBuy.add(order1)
       orderBookBuy.add(order2)
       orderBookBuy.orders shouldBe List(order2, order1)
     }
 
     it("can add two limit orders to the BUY order book, with the same price limit") {
-      val order1 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID())
-      val order2 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID())
+      val order1 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
+      val order2 = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
       orderBookBuy.add(order1)
       orderBookBuy.add(order2)
       orderBookBuy.orders shouldBe List(order1, order2)
     }
 
     it("can add a single limit order to the SELL order book") {
-      val order = LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID())
+      val order = LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID(), UUID.randomUUID())
       orderBookSell.add(order)
       orderBookSell.orders.size shouldBe 1
       orderBookSell.top.get shouldBe order
     }
 
     it("can add two limit orders to the SELL order book, with more aggressive order first") {
-      val order1 = LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID())
-      val order2 = LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID())
+      val order1 = LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID(), UUID.randomUUID())
+      val order2 = LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID())
       orderBookSell.add(order1)
       orderBookSell.add(order2)
       orderBookSell.orders shouldBe List(order1, order2)
     }
 
     it("can add two limit orders to the SELL order book, with the same price limit") {
-      val order1 = LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID())
-      val order2 = LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID())
+      val order1 = LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID())
+      val order2 = LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID())
       orderBookSell.add(order1)
       orderBookSell.add(order2)
       orderBookSell.orders shouldBe List(order1, order2)
     }
 
     it("can decrease top outstanding order partially and then fill it completely") {
-      val order1 = LimitOrder(BuyOrder, 100, 10000.7, UUID.randomUUID())
-      val order2 = LimitOrder(BuyOrder, 100, 10000.7, UUID.randomUUID())
+      val order1 = LimitOrder(BuyOrder, 100, 10000.7, UUID.randomUUID(), UUID.randomUUID())
+      val order2 = LimitOrder(BuyOrder, 100, 10000.7, UUID.randomUUID(), UUID.randomUUID())
       orderBookBuy.add(order1)
       orderBookBuy.add(order2)
 

@@ -69,12 +69,12 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
 
     (order, top) match {
       // There is a top limit order we can match anything with
-      case (_, topLimitOrder @ LimitOrder(_, _, _, _)) =>
+      case (_, topLimitOrder @ LimitOrder(_, _, _, _, _)) =>
         if(order.crossesAt(topLimitOrder.threshold)) trade(topLimitOrder.threshold)
         else None
 
       // Match a limit order with a market order
-      case (limitOrder @ LimitOrder(_, _, _, _), MarketOrder(_, _, _)) =>
+      case (limitOrder @ LimitOrder(_, _, _, _, _), MarketOrder(_, _, _, _)) =>
         val limitThreshold = oppositeBestLimit match {
           case Some(threshold) => if (order.crossesAt(threshold)) threshold else limitOrder.threshold
           case None => limitOrder.threshold
@@ -82,7 +82,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
         trade(limitThreshold)
 
       // Match a market order with a market order
-      case (MarketOrder(_, _, _), MarketOrder(_, _, _)) =>
+      case (MarketOrder(_, _, _, _), MarketOrder(_, _, _, _)) =>
         val limitThreshold = oppositeBestLimit match {
           case Some(threshold) => threshold
           case None => marketReferencePrice match {
