@@ -94,26 +94,27 @@ class OrderBook[+O <: OrderType](orderType: OrderType) {
 
   // NOTE: We can't cancel using apply() because quantities may change
   private def cancelOrder(order: Order) {
-    def removeFromThresholdList(list: List[ThresholdType]): List[ThresholdType] = {
+    def removeFromThresholdList(book: List[ThresholdType]): (Option[Order], List[ThresholdType]) = {
       val thresholdOrder = order.asInstanceOf[Order with Threshold]
-      list.find(_._1 == thresholdOrder.threshold) match {
+      book.find(_._1 == thresholdOrder.threshold) match {
         case Some((threshold, pendingOrders)) =>
           // TODO: Merge these two sections into something much cleaner!
           // 1) Save the canceled order
-          pendingOrders.partition(o => o.id == order.id) match {
-            case (canceledOrder :: tail, rest) =>
-              cancelBook = cancelBook :+ canceledOrder
-            case _ => // No match
+          val someOrder = pendingOrders.partition(o => o.id == order.id) match {
+            case (canceledOrder :: tail, rest) => Some(canceledOrder)
+            case _ => None
           }
-          // 2) Remove it from list
-          list map tupled { (t: Double, l: List[Order]) =>
+          // 2) Remove it from book
+          val cleanBook = book map tupled { (t: Double, l: List[Order]) =>
             (t, l.filter(o => o.id != order.id)) match {
               case (_, Nil) => None
               case thresholdLevel => Some(thresholdLevel)
             }
           } flatMap (o => o)
+          // Return the tuple
+          (someOrder, cleanBook)
 
-        case None => list
+        case None => (None, book)
       }
     }
 
@@ -122,7 +123,14 @@ class OrderBook[+O <: OrderType](orderType: OrderType) {
       // Cancel limit order if possible
       case limitOrder@LimitOrder(_, _, _, _) =>
         // Find threshold and orders at that threshold
-        limitBook = removeFromThresholdList(limitBook)
+        val (optionCanceledOrder, book) = removeFromThresholdList(limitBook)
+        // Save the book (could be changed)
+        limitBook = book
+        // Add the canceled order to the canceled orders list
+        optionCanceledOrder match {
+          case Some(canceledOrder) => cancelBook = cancelBook :+ canceledOrder
+          case None =>
+        }
 
       // Cancel market order if possible
       case MarketOrder(_, _, _) => marketBook.partition(o => o.id != order.id) match {
