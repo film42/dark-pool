@@ -32,6 +32,11 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
     unfilledOrder.map(book.add)
   }
 
+  def cancelOrder(order: Order) {
+    val (book, _) = getBooks(order.orderType)
+    book.cancel(order)
+  }
+
   def tryMatch(order: Order, counterBook: OrderBook[OrderType]): Option[Order] = {
     if (order.quantity == 0) None
     else counterBook.top match {
