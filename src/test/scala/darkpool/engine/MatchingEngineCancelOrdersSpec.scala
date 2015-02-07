@@ -6,7 +6,7 @@ import darkpool.book.OrderBook
 import darkpool.models.orders.{BuyOrder, LimitOrder, SellOrder}
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
-class MatchingEngineCancelOrdersSpec  extends FunSpec with Matchers with BeforeAndAfter {
+class MatchingEngineCancelOrdersSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("Canceling Orders from Matching Engine") {
 

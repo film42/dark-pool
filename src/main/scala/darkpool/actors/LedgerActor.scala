@@ -1,13 +1,13 @@
 package darkpool.actors
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import darkpool.models.Trade
 
-class LedgerActor extends Actor {
+class LedgerActor extends Actor with ActorLogging {
   def recordTransaction(trade: Trade) {
     trade match {
       case Trade(buyer, seller, price, quantity) =>
-        println(s"$buyer bought $quantity from $seller for $$$price")
+        log.info(s"$buyer bought $quantity from $seller for $$$price")
     }
   }
 

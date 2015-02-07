@@ -4,4 +4,4 @@ import java.util.UUID
 
 import darkpool.models.common.{Quantity, CreatedAt}
 
-case class Trade(buyerUUID: UUID, sellerUUID: UUID, price: Double, quantity: Double) extends CreatedAt with Quantity
+case class Trade(buyerId: UUID, sellerId: UUID, price: Double, quantity: Double) extends CreatedAt with Quantity

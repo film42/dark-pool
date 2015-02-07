@@ -14,7 +14,7 @@ package object orders {
   }
   trait Buy extends OrderType
   trait Sell extends OrderType
-  trait Order extends Quantity with CreatedAt with ID {
+  trait Order extends Quantity with CreatedAt with ID with AccountID {
     def decreasedBy(quantity: Double): Order
     def crossesAt(price: Double): Boolean
     // TODO: Rename this awful name

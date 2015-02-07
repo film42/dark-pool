@@ -1,13 +1,16 @@
 package darkpool.engine
 
+import java.util.UUID
+
 import akka.actor.{ActorSystem, Props}
 import darkpool.actors.LedgerActor
 import darkpool.book.OrderBook
+import darkpool.engine.commands.MarketSnapshot
 import darkpool.models.Trade
 import darkpool.models.orders._
 
 class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell]) {
-  private val system = ActorSystem("dark-pool")
+  private val system = ActorSystem("darkpool-testing")
   private val ledger = system.actorOf(Props[LedgerActor])
 
   // TODO: Expose this via Ledger Actor
@@ -15,26 +18,26 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
 
   private var marketReferencePrice: Option[Double] = None
 
-  def referencePrice = marketReferencePrice.get
+  def referencePrice = marketReferencePrice.getOrElse(0.0)
 
   def referencePrice_=(price: Double) {
     marketReferencePrice = Some(price)
   }
-
-  def getBooks(orderType: OrderType): (OrderBook[OrderType], OrderBook[OrderType]) = orderType match {
+  
+  def books(orderType: OrderType): (OrderBook[OrderType], OrderBook[OrderType]) = orderType match {
     case BuyOrder => (buyOrderBook, sellOrderBook)
     case SellOrder => (sellOrderBook, buyOrderBook)
   }
 
   def acceptOrder(order: Order) {
-    val (book, counterBook) = getBooks(order.orderType)
+    val (book, counterBook) = books(order.orderType)
     val unfilledOrder = tryMatch(order, counterBook)
-    unfilledOrder.map(book.add)
+    unfilledOrder.map(book.addOrder)
   }
 
   def cancelOrder(order: Order) {
-    val (book, _) = getBooks(order.orderType)
-    book.cancel(order)
+    val (book, _) = books(order.orderType)
+    book.cancelOrder(order)
   }
 
   def tryMatch(order: Order, counterBook: OrderBook[OrderType]): Option[Order] = {
@@ -42,15 +45,30 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
     else counterBook.top match {
       case None => Some(order)
       case Some(top) => tryMatchWithTop(order, top) match {
+        // No match, add to order book
         case None => Some(order)
+        // A trade was made
         case Some(trade) =>
           counterBook.decreaseTopBy(trade.quantity)
-          // ledger ! trade // FIXME: don't send to akka right now
+          // /TODO: Check for self trade prevention
+          ledger ! trade // FIXME: don't send to akka right now
           trades = trades :+ trade
           val unfilledOrder = order.decreasedBy(trade.quantity)
           tryMatch(unfilledOrder, counterBook)
       }
     }
+  }
+
+  def marketSnapshot: MarketSnapshot = {
+    MarketSnapshot(
+      math.abs(sellOrderBook.bestLimit.getOrElse(0.0) - buyOrderBook.bestLimit.getOrElse(0.0)),
+      buyOrderBook.thresholdView,
+      sellOrderBook.thresholdView,
+      referencePrice)
+  }
+
+  private def ordersForAccountId(accountId: UUID): List[Order] = {
+    buyOrderBook.ordersForAccountId(accountId) ++ sellOrderBook.ordersForAccountId(accountId)
   }
 
   // TODO: Do we need .orderType.isInstanceOf[BuyOrder] ???
