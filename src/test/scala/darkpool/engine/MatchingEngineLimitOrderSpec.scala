@@ -33,7 +33,7 @@ class MatchingEngineLimitOrderSpec extends FunSpec with Matchers with BeforeAndA
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.7
       trade.quantity shouldBe 100
-      trade.buyerId shouldBe buyOrder.id
+      trade.buyOrderId shouldBe buyOrder.id
     }
 
     it("can match trade price higher than top of book") {
@@ -43,7 +43,7 @@ class MatchingEngineLimitOrderSpec extends FunSpec with Matchers with BeforeAndA
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.7
       trade.quantity shouldBe 100
-      trade.buyerId shouldBe buyOrder.id
+      trade.buyOrderId shouldBe buyOrder.id
     }
 
     it("matches a Sell order large enough to clear the Buy book") {

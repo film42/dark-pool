@@ -48,4 +48,9 @@ class MatchingEngineActor(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook
   override protected def canceledOrderCallback(order: Order) {
     context.actorSelection("/user/ledger") ! order
   }
+
+  override protected def selfTradePreventionCallback(trade: Trade) {
+    // TODO: Create a new self trade type?
+    context.actorSelection("/user/ledger") ! trade
+  }
 }

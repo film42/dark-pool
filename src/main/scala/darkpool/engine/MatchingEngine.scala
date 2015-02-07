@@ -45,10 +45,18 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
         // A trade was made
         case Some(trade) =>
           counterBook.decreaseTopBy(trade.quantity)
-          // TODO: Check for self trade prevention
-          tradeCallback(trade)
-          this.synchronized { trades = trades :+ trade }
           val unfilledOrder = order.decreasedBy(trade.quantity)
+
+          // Check for self trade prevention:
+          // If we find that we're executing two orders of the same account, we will alert any subscribers
+          // and continue down with tryMatch
+          if(trade.buyerId == trade.sellerId) {
+            selfTradePreventionCallback(trade)
+          } else {
+            tradeCallback(trade)
+            this.synchronized { trades = trades :+ trade }
+          }
+
           tryMatch(unfilledOrder, counterBook)
       }
     }
@@ -72,7 +80,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
     def trade(price: Double): Option[Trade] = {
       marketReferencePrice = Some(price)
       val (buy, sell) = if (order.orderType.isInstanceOf[Buy]) (order, top) else (top, order)
-      Some(Trade(buy.id, sell.id, price, math.min(buy.quantity, sell.quantity)))
+      Some(Trade(buy.accountId, sell.accountId, buy.id, sell.id, price, math.min(buy.quantity, sell.quantity)))
     }
 
     lazy val oppositeBestLimit: Option[Double] = {
@@ -110,6 +118,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
   protected def tradeCallback(trade: Trade) {}
   protected def acceptedOrderCallback(order: Order) {}
   protected def canceledOrderCallback(order: Order) {}
+  protected def selfTradePreventionCallback(trade: Trade) {}
 
 }
 
