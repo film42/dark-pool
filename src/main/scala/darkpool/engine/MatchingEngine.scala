@@ -2,26 +2,21 @@ package darkpool.engine
 
 import java.util.UUID
 
-import akka.actor.{ActorSystem, Props}
-import darkpool.actors.LedgerActor
 import darkpool.book.OrderBook
 import darkpool.engine.commands.MarketSnapshot
 import darkpool.models.Trade
 import darkpool.models.orders._
 
 class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell]) {
-  private val system = ActorSystem("darkpool-testing")
-  private val ledger = system.actorOf(Props[LedgerActor])
-
   // TODO: Expose this via Ledger Actor
   var trades = List[Trade]()
 
   private var marketReferencePrice: Option[Double] = None
 
-  def referencePrice = marketReferencePrice.getOrElse(0.0)
+  def referencePrice = marketReferencePrice.getOrElse(Double.PositiveInfinity)
 
   def referencePrice_=(price: Double) {
-    marketReferencePrice = Some(price)
+    this.synchronized { marketReferencePrice = Some(price) }
   }
   
   def books(orderType: OrderType): (OrderBook[OrderType], OrderBook[OrderType]) = orderType match {
@@ -50,9 +45,9 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
         // A trade was made
         case Some(trade) =>
           counterBook.decreaseTopBy(trade.quantity)
-          // /TODO: Check for self trade prevention
-          ledger ! trade // FIXME: don't send to akka right now
-          trades = trades :+ trade
+          // TODO: Check for self trade prevention
+          tradeCallback(trade)
+          this.synchronized { trades = trades :+ trade }
           val unfilledOrder = order.decreasedBy(trade.quantity)
           tryMatch(unfilledOrder, counterBook)
       }
@@ -111,6 +106,10 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
         trade(limitThreshold)
     }
   }
+
+  protected def tradeCallback(trade: Trade) {}
+  protected def acceptedOrderCallback(order: Order) {}
+  protected def canceledOrderCallback(order: Order) {}
 
 }
 
