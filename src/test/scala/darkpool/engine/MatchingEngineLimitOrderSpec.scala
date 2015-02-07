@@ -20,34 +20,34 @@ class MatchingEngineLimitOrderSpec extends FunSpec with Matchers with BeforeAndA
       orderBookSell = new OrderBook(SellOrder)
       matchingEngine = new MatchingEngine(orderBookBuy, orderBookSell)
 
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 200, 10.3, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 200, 10.8, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 200, 10.3, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 200, 10.8, UUID.randomUUID(), UUID.randomUUID()))
     }
 
     it("can match identical buy order to outstanding sell order") {
-      val buyOrder = LimitOrder(BuyOrder, 100, 10.7, UUID.randomUUID())
+      val buyOrder = LimitOrder(BuyOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID())
       matchingEngine.acceptOrder(buyOrder)
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.7
       trade.quantity shouldBe 100
-      trade.buyerUUID shouldBe buyOrder.id
+      trade.buyOrderId shouldBe buyOrder.id
     }
 
     it("can match trade price higher than top of book") {
-      val buyOrder = LimitOrder(BuyOrder, 100, 10.8, UUID.randomUUID())
+      val buyOrder = LimitOrder(BuyOrder, 100, 10.8, UUID.randomUUID(), UUID.randomUUID())
       matchingEngine.acceptOrder(buyOrder)
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.7
       trade.quantity shouldBe 100
-      trade.buyerUUID shouldBe buyOrder.id
+      trade.buyOrderId shouldBe buyOrder.id
     }
 
     it("matches a Sell order large enough to clear the Buy book") {
-      val limitOrder = LimitOrder(SellOrder, 350, 10.3, UUID.randomUUID())
+      val limitOrder = LimitOrder(SellOrder, 350, 10.3, UUID.randomUUID(), UUID.randomUUID())
       matchingEngine.acceptOrder(limitOrder)
 
       val trades = matchingEngine.trades
@@ -61,7 +61,7 @@ class MatchingEngineLimitOrderSpec extends FunSpec with Matchers with BeforeAndA
     }
 
     it("matches a large Buy order partially") {
-      val limitOrder = LimitOrder(BuyOrder, 350, 10.7, UUID.randomUUID())
+      val limitOrder = LimitOrder(BuyOrder, 350, 10.7, UUID.randomUUID(), UUID.randomUUID())
       matchingEngine.acceptOrder(limitOrder)
 
       val trade = matchingEngine.trades.head
@@ -74,7 +74,7 @@ class MatchingEngineLimitOrderSpec extends FunSpec with Matchers with BeforeAndA
     }
 
     it("matches a large sell order partially") {
-      val limitOrder = LimitOrder(SellOrder, 350, 10.4, UUID.randomUUID())
+      val limitOrder = LimitOrder(SellOrder, 350, 10.4, UUID.randomUUID(), UUID.randomUUID())
       matchingEngine.acceptOrder(limitOrder)
 
       val trade = matchingEngine.trades.head

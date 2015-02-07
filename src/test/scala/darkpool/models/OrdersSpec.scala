@@ -10,7 +10,7 @@ class OrdersSpec extends FunSpec with Matchers {
   describe("LimitOrder") {
     it("can be created with correct params") {
       val randomUUID = UUID.randomUUID()
-      val limitOrder = LimitOrder(BuyOrder, 3.5, 300.00, randomUUID)
+      val limitOrder = LimitOrder(BuyOrder, 3.5, 300.00, randomUUID, randomUUID)
 
       limitOrder.createdAt should be > (DateTime.now - 1.second)
       limitOrder.id shouldBe randomUUID
@@ -19,7 +19,7 @@ class OrdersSpec extends FunSpec with Matchers {
     }
 
     it("extends an Buy trait") {
-      val limitOrder = LimitOrder(BuyOrder, 3.5, 300.00, UUID.randomUUID())
+      val limitOrder = LimitOrder(BuyOrder, 3.5, 300.00, UUID.randomUUID(), UUID.randomUUID())
       assert(limitOrder.orderType.isInstanceOf[Buy])
     }
   }
@@ -27,7 +27,7 @@ class OrdersSpec extends FunSpec with Matchers {
   describe("MarketOrder") {
     it("can be created with correct params") {
       val randomUUID = UUID.randomUUID()
-      val marketOrder = MarketOrder(SellOrder, 3.5, randomUUID)
+      val marketOrder = MarketOrder(SellOrder, 3.5, randomUUID, randomUUID)
 
       marketOrder.createdAt should be > (DateTime.now - 1.second)
       marketOrder.id shouldBe randomUUID
@@ -35,7 +35,7 @@ class OrdersSpec extends FunSpec with Matchers {
     }
 
     it("extends an Sell trait") {
-      val marketOrder = MarketOrder(SellOrder, 3.5, UUID.randomUUID())
+      val marketOrder = MarketOrder(SellOrder, 3.5, UUID.randomUUID(), UUID.randomUUID())
       assert(marketOrder.orderType.isInstanceOf[Sell])
     }
   }

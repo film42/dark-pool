@@ -21,29 +21,29 @@ class OrderBookBestLimitSpec extends FunSpec with Matchers with BeforeAndAfter {
     }
 
     it("does not have a best limit order given only market orders") {
-      orderBookBuy.add(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      orderBookSell.add(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
+      orderBookBuy.addOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      orderBookSell.addOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       orderBookBuy.bestLimit shouldBe None
       orderBookSell.bestLimit shouldBe None
     }
 
     it("various life cycles of the order book best limit for BUY") {
-      val marketOrder = MarketOrder(BuyOrder, 100, UUID.randomUUID())
-      orderBookBuy.add(marketOrder)
-      val firstOrder = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID())
-      orderBookBuy.add(firstOrder)
+      val marketOrder = MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID())
+      orderBookBuy.addOrder(marketOrder)
+      val firstOrder = LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
+      orderBookBuy.addOrder(firstOrder)
 
       orderBookBuy.bestLimit.get shouldBe firstOrder.threshold
       orderBookBuy.orders shouldBe List(marketOrder, firstOrder)
 
-      val conservativeOrder = LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID())
-      orderBookBuy.add(conservativeOrder)
+      val conservativeOrder = LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID())
+      orderBookBuy.addOrder(conservativeOrder)
       orderBookBuy.bestLimit.get shouldBe firstOrder.threshold
       orderBookBuy.orders shouldBe List(marketOrder, firstOrder, conservativeOrder)
 
-      val aggressiveOrder = LimitOrder(BuyOrder, 100, 10.6, UUID.randomUUID())
-      orderBookBuy.add(aggressiveOrder)
+      val aggressiveOrder = LimitOrder(BuyOrder, 100, 10.6, UUID.randomUUID(), UUID.randomUUID())
+      orderBookBuy.addOrder(aggressiveOrder)
       orderBookBuy.bestLimit.get shouldBe aggressiveOrder.threshold
       orderBookBuy.orders shouldBe List(marketOrder, aggressiveOrder, firstOrder, conservativeOrder)
 
@@ -61,21 +61,21 @@ class OrderBookBestLimitSpec extends FunSpec with Matchers with BeforeAndAfter {
     }
 
     it("various life cycles of the order book best limit for SELL") {
-      val marketOrder = MarketOrder(SellOrder, 100, UUID.randomUUID())
-      orderBookSell.add(marketOrder)
-      val firstOrder = LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID())
-      orderBookSell.add(firstOrder)
+      val marketOrder = MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID())
+      orderBookSell.addOrder(marketOrder)
+      val firstOrder = LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID())
+      orderBookSell.addOrder(firstOrder)
 
       orderBookSell.bestLimit.get shouldBe firstOrder.threshold
       orderBookSell.orders shouldBe List(marketOrder, firstOrder)
 
-      val conservativeOrder = LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID())
-      orderBookSell.add(conservativeOrder)
+      val conservativeOrder = LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID(), UUID.randomUUID())
+      orderBookSell.addOrder(conservativeOrder)
       orderBookSell.bestLimit.get shouldBe firstOrder.threshold
       orderBookSell.orders shouldBe List(marketOrder, firstOrder, conservativeOrder)
 
-      val aggressiveOrder = LimitOrder(SellOrder, 100, 10.4, UUID.randomUUID())
-      orderBookSell.add(aggressiveOrder)
+      val aggressiveOrder = LimitOrder(SellOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID())
+      orderBookSell.addOrder(aggressiveOrder)
       orderBookSell.bestLimit.get shouldBe aggressiveOrder.threshold
       orderBookSell.orders shouldBe List(marketOrder, aggressiveOrder, firstOrder, conservativeOrder)
 

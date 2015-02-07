@@ -14,7 +14,7 @@ package object orders {
   }
   trait Buy extends OrderType
   trait Sell extends OrderType
-  trait Order extends Quantity with CreatedAt with ID {
+  trait Order extends Quantity with CreatedAt with ID with AccountID {
     def decreasedBy(quantity: Double): Order
     def crossesAt(price: Double): Boolean
     // TODO: Rename this awful name
@@ -34,7 +34,7 @@ package object orders {
   //
   // Order Implementations
   //
-  case class MarketOrder(orderType: OrderType, orderQuantity: Double, orderId: UUID)
+  case class MarketOrder(orderType: OrderType, orderQuantity: Double, orderId: UUID, accountId: UUID)
     extends Order {
 
     override def id: UUID = orderId
@@ -42,10 +42,10 @@ package object orders {
     // Market orders accept any price
     override def crossesAt(price: Double): Boolean = true
     override def decreasedBy(quantity: Double): MarketOrder =
-      MarketOrder(orderType, orderQuantity - quantity, orderId)
+      MarketOrder(orderType, orderQuantity - quantity, orderId, accountId)
   }
 
-  case class LimitOrder(orderType: OrderType, orderQuantity: Double, orderThreshold: Double, orderId: UUID)
+  case class LimitOrder(orderType: OrderType, orderQuantity: Double, orderThreshold: Double, orderId: UUID, accountId: UUID)
     extends Order with Threshold {
 
     override def quantity: Double = orderQuantity
@@ -56,10 +56,10 @@ package object orders {
       case SellOrder => price >= threshold
     }
     override def decreasedBy(quantity: Double): LimitOrder =
-      LimitOrder(orderType, orderQuantity - quantity, orderThreshold, orderId)
+      LimitOrder(orderType, orderQuantity - quantity, orderThreshold, orderId, accountId)
   }
 
-  case class StopOrder(orderType: OrderType, orderQuantity: Double, orderThreshold: Double, orderId: UUID)
+  case class StopOrder(orderType: OrderType, orderQuantity: Double, orderThreshold: Double, orderId: UUID, accountId: UUID)
     extends Order with Threshold {
 
     override def quantity: Double = orderQuantity
@@ -70,16 +70,7 @@ package object orders {
       case SellOrder => price >= threshold
     }
     override def decreasedBy(quantity: Double): StopOrder =
-      StopOrder(orderType, orderQuantity - quantity, orderThreshold, orderId)
-  }
-
-  case class CancelOrder(orderType: OrderType, orderId: UUID)
-    extends Order {
-
-    override def decreasedBy(quantity: Double): CancelOrder = CancelOrder(orderType, orderId)
-    override def crossesAt(price: Double): Boolean = true
-    override def quantity: Double = 0.0
-    override def id: UUID = orderId
+      StopOrder(orderType, orderQuantity - quantity, orderThreshold, orderId, accountId)
   }
 
 }

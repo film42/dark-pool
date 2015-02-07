@@ -16,7 +16,13 @@ package object common {
     def id: UUID
   }
 
+  trait AccountID {
+    def accountId: UUID
+  }
+
   trait Quantity {
     def quantity: Double
   }
+
+  case class ThresholdQuantity(threshold: Double, quantity: Double)
 }

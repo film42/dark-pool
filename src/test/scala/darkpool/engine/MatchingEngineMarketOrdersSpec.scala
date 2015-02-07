@@ -22,10 +22,10 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
   describe("Incoming Market Order Scenarios") {
 
     it("matches a large Buy market order against multiple limit orders") {
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.7, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 200, 10.6, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 300, 10.5, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 650, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 200, 10.6, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 300, 10.5, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 650, UUID.randomUUID(), UUID.randomUUID()))
 
       val trades = matchingEngine.trades
       trades(0).price shouldBe 10.7
@@ -41,10 +41,10 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches a small Buy market order against limit orders") {
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.7, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 200, 10.6, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 300, 10.5, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 150, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.7, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 200, 10.6, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 300, 10.5, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 150, UUID.randomUUID(), UUID.randomUUID()))
 
       val trades = matchingEngine.trades
       trades(0).price shouldBe 10.7
@@ -58,10 +58,10 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches a large Sell market order against multiple limit orders") {
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 200, 10.6, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 300, 10.7, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 650, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 200, 10.6, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 300, 10.7, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 650, UUID.randomUUID(), UUID.randomUUID()))
 
       val trades = matchingEngine.trades
       trades(0).price shouldBe 10.5
@@ -77,10 +77,10 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches a small Sell market order against limit orders") {
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 200, 10.6, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 300, 10.7, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 150, UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 200, 10.6, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 300, 10.7, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 150, UUID.randomUUID(), UUID.randomUUID()))
 
       val trades = matchingEngine.trades
       trades(0).price shouldBe 10.5
@@ -96,8 +96,8 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
 
   describe("Incoming Limit Orders to Outstanding Market Order Scenarios") {
     it("matches incoming Buy limit order against a single outstanding Sell market order") {
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 120, 10.5, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 120, 10.5, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.5
@@ -109,8 +109,8 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Sell limit order against a single outstanding Buy market order") {
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 120, 10.5, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 120, 10.5, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.5
@@ -122,9 +122,9 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Buy limit order against Sell market order while another NON-CROSSING Sell limit order is outstanding") {
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 120, 10.5, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.6, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 120, 10.5, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.5
@@ -136,9 +136,9 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Sell limit order against Buy market order while another NON-CROSSING Buy limit order is outstanding") {
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 120, 10.5, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 120, 10.5, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.5
@@ -150,9 +150,9 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Buy limit order against Sell market order while another CROSSING Sell limit order is outstanding") {
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.4, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 120, 10.5, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.4, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 120, 10.5, UUID.randomUUID(), UUID.randomUUID()))
 
       val trades = matchingEngine.trades
       trades(0).price shouldBe 10.4
@@ -166,9 +166,9 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Sell limit order against Buy market order while another CROSSING Buy limit order is outstanding") {
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.6, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 120, 10.5, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.6, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 120, 10.5, UUID.randomUUID(), UUID.randomUUID()))
 
       val trades = matchingEngine.trades
       trades(0).price shouldBe 10.6
@@ -182,9 +182,9 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Buy market order against Sell market order when another - limit - Sell order present") {
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(SellOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.5
@@ -196,9 +196,9 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Sell market order against Buy market order when another - limit - Buy order present") {
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(LimitOrder(BuyOrder, 100, 10.5, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10.5
@@ -214,8 +214,8 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
   describe("Matching Market Orders Using a Reference Price") {
 
     it("matches incoming Buy market order against Sell market order when no best limit price is available") {
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10
@@ -226,8 +226,8 @@ class MatchingEngineMarketOrdersSpec extends FunSpec with Matchers with BeforeAn
     }
 
     it("matches incoming Sell market order against Sell market order when no best limit price is available") {
-      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID()))
-      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(BuyOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
+      matchingEngine.acceptOrder(MarketOrder(SellOrder, 100, UUID.randomUUID(), UUID.randomUUID()))
 
       val trade = matchingEngine.trades.head
       trade.price shouldBe 10
