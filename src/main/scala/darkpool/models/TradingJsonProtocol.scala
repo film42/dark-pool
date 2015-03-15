@@ -2,6 +2,8 @@ package darkpool.models
 
 import java.util.UUID
 
+import darkpool.engine.commands.MarketSnapshot
+import darkpool.models.common.ThresholdQuantity
 import spray.json._
 
 /**
@@ -18,18 +20,7 @@ object TradingJsonProtocol extends DefaultJsonProtocol {
 
   implicit val tradeJsonFormat = jsonFormat6(Trade)
 
-//  implicit object TradeJsonFormat extends RootJsonFormat[Trade] {
-//    override def write(trade: Trade) = JsArray(
-//      JsString(trade.buyerId.toString),
-//      JsString(trade.sellerId.toString),
-//      JsString(trade.buyOrderId.toString),
-//      JsString(trade.sellOrderId.toString),
-//      JsNumber(trade.price),
-//      JsNumber(trade.quantity),
-//      JsString(trade.createdAt.toString)
-//    )
-//
-//    override def read(json: JsValue): Trade = ???
-//  }
+  implicit val thresholdQuantityFormat = jsonFormat2(ThresholdQuantity)
+  implicit val marketSnapshotFormat = jsonFormat4(MarketSnapshot)
 
 }

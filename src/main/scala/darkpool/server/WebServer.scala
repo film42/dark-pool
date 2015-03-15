@@ -1,19 +1,54 @@
 package darkpool.server
 
+import java.util.UUID
+
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
-import darkpool.actors.{LedgerActor, MatchingEngineActor, QueryActor}
-import darkpool.book.OrderBook
-import darkpool.models.orders.{BuyOrder, SellOrder}
-import spray.can.Http
 import akka.pattern.ask
 import akka.util.Timeout
+import darkpool.actors.{LedgerActor, MatchingEngineActor, QueryActor}
+import darkpool.book.OrderBook
+import darkpool.engine.commands.Add
+import darkpool.models.orders._
+import spray.can.Http
+
 import scala.concurrent.duration._
+import scala.util.Random
 
 /**
  * Created by: film42 on: 3/14/15.
  */
 object WebServer extends App {
+
+  // TODO: Remove
+  object TradeGenerator {
+    val random = new Random()
+
+    private def randomThreshold = random.nextInt(100) + (random.nextInt(10) / 10.0)
+    private def randomQuantity = random.nextInt(100) + 1
+
+    def randomOrder: Order = {
+      val orderSwitch = random.nextInt(100)
+      val sideSwitch = random.nextInt(100)
+
+      // Pick a Side
+      val side = if(sideSwitch % 2 == 0) {
+        BuyOrder
+      } else {
+        SellOrder
+      }
+
+      // Pick an order
+      if(orderSwitch % 2 == 0) {
+        MarketOrder(side, randomQuantity, UUID.randomUUID(), UUID.randomUUID())
+      } else {
+        LimitOrder(side, randomQuantity, randomThreshold, UUID.randomUUID(), UUID.randomUUID())
+      }
+    }
+  }
+
+
+
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("dark-pool-server")
 
@@ -26,6 +61,13 @@ object WebServer extends App {
   val engineActor = system.actorOf(Props(new MatchingEngineActor(orderBookBuy, orderBookSell)), "engine")
   val apiActor = system.actorOf(Props[QueryActor], "api")
   val ledgerActor = system.actorOf(Props[LedgerActor], "ledger")
+
+
+  // TODO: Remove
+  for(i <- Range(0, 1000)) {
+    engineActor ! Add(TradeGenerator.randomOrder)
+  }
+
 
   // timeout default
   implicit val timeout = Timeout(5.seconds)

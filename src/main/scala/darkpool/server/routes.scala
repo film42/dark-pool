@@ -1,13 +1,15 @@
 package darkpool.server
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorSelection}
 import akka.pattern.ask
 import akka.util.Timeout
+import darkpool.engine.commands._
 import spray.http.MediaTypes._
 import spray.routing.HttpService
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 /**
  * Created by: film42 on: 3/14/15.
@@ -21,20 +23,22 @@ package object routes {
 
     implicit val timeout = Timeout(5.seconds)
 
-    def actorResponse[T](actor: ActorRef, msg: Any): Future[T] = (actor ? msg).mapTo[T]
+//    def actorResponse[T](actor: ActorRef, msg: Any): Future[T] = (actor ? msg).mapTo[T]
 
-    def actorWithName(name: String): ActorRef = ???
+    def actorWithName(name: String): ActorSelection
 
     def routes =
       path("snapshot") {
-        get {
-          respondWithMediaType(`application/json`) {
-            //onComplete(actorResponse(actorWithName("engine"), Snapshot)) {
-              complete {
-                List(1,2,3).toJson.toString()
-              }
-            //}
-          }
+        get { ctx =>
+            ask(actorWithName("engine"), Snapshot)
+              .mapTo[MarketSnapshot]
+              .onComplete {
+
+              case Success(marketSnapshot) =>
+                ctx.complete(marketSnapshot.toJson.toString())
+              case Failure(ex) =>
+                ctx.complete(ex.getMessage)
+            }
         }
       } ~ path("orders" / Segment) { userId =>
         get {
@@ -53,11 +57,15 @@ package object routes {
 
     // The HttpService trait defines only one abstract member, which
     // connects the services environment to the enclosing actor or test
-    def actorRefFactory = context
+    override def actorRefFactory = context
 
     // This actor only runs our route, but you could add
     // other things here, like request stream processing
     // or timeout handling
-    def receive = runRoute(routes)
+    override def receive = runRoute(routes)
+
+    override def actorWithName(name: String): ActorSelection =
+      context.actorSelection(s"/user/$name")
+
   }
 }
