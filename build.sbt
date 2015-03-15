@@ -1,3 +1,7 @@
+import NativePackagerKeys._
+
+packageArchetype.java_application
+
 name := "dark-pool"
 
 version := "1.0"
