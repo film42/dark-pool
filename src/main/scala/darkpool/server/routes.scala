@@ -1,11 +1,16 @@
 package darkpool.server
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorSelection}
 import akka.pattern.ask
 import akka.util.Timeout
+import darkpool.datastore.LedgerDatastore
 import darkpool.engine.commands._
+import darkpool.models._
+
 import spray.http.MediaTypes._
-import spray.routing.HttpService
+import spray.routing.{HttpService, RequestContext}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -16,39 +21,74 @@ import scala.util.{Failure, Success}
  */
 
 package object routes {
-  import darkpool.models.TradingJsonProtocol._
+  import TradingJsonProtocol._
   import spray.json._
 
   trait ApiService extends HttpService {
 
     implicit val timeout = Timeout(5.seconds)
 
-//    def actorResponse[T](actor: ActorRef, msg: Any): Future[T] = (actor ? msg).mapTo[T]
+    val jsonResponse = respondWithMediaType(`application/json`)
+
+    def responseFromActor[A](actorName: String, message: Any)(implicit ctx: RequestContext) = {
+      ask(actorWithName("engine"), Snapshot)
+        .mapTo[MarketSnapshot]
+        .onComplete {
+
+        case Success(marketSnapshot) =>
+          ctx.complete(marketSnapshot.toJson.toString())
+        case Failure(ex) =>
+          ctx.complete(Error(ex.getMessage).toJson.toString())
+      }
+    }
 
     def actorWithName(name: String): ActorSelection
 
-    def routes =
-      path("snapshot") {
-        get { ctx =>
-            ask(actorWithName("engine"), Snapshot)
-              .mapTo[MarketSnapshot]
-              .onComplete {
+    def routes = jsonResponse {
 
-              case Success(marketSnapshot) =>
-                ctx.complete(marketSnapshot.toJson.toString())
-              case Failure(ex) =>
-                ctx.complete(ex.getMessage)
-            }
+      path("snapshot") {
+        get { implicit ctx =>
+          responseFromActor[MarketSnapshot]("engine", Snapshot)
         }
-      } ~ path("orders" / Segment) { userId =>
-        get {
-          respondWithMediaType(`application/json`) {
+
+      } ~
+      pathPrefix("orders") {
+        pathEndOrSingleSlash {
+          post {
+            entity(as[String]) { complete(_) }
+          }
+        } ~
+        path(Segment) { userId =>
+          get {
             complete {
               s"""{"test" : "$userId"}"""
             }
           }
         }
+      } ~
+      pathPrefix("trades") {
+        pathEndOrSingleSlash {
+          get {
+            parameters('limit ? 100)  { limitParameter =>
+              complete(LedgerDatastore.limit(limitParameter).toJson.toString())
+            }
+          }
+        } ~
+        path(Segment) { someId =>
+          get {
+            val uuid = UUID.fromString(someId)
+            val optionTrade = LedgerDatastore.find(uuid)
+
+            optionTrade match {
+              case Some(trade) =>
+                complete(trade.toJson.toString())
+              case None =>
+                complete(Error(s"No such trade with id $someId").toJson.toString())
+            }
+          }
+        }
       }
+    }
 
   }
 

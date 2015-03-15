@@ -10,6 +10,8 @@ import spray.json._
  * Created by: film42 on: 3/14/15.
  */
 
+case class Error(error: String)
+
 object TradingJsonProtocol extends DefaultJsonProtocol {
 
   implicit object UuidJsonFormat extends RootJsonFormat[UUID] {
@@ -18,9 +20,11 @@ object TradingJsonProtocol extends DefaultJsonProtocol {
     override def write(obj: UUID): JsValue = JsString(obj.toString)
   }
 
-  implicit val tradeJsonFormat = jsonFormat6(Trade)
+  implicit val tradeJsonFormat = jsonFormat7(Trade)
 
-  implicit val thresholdQuantityFormat = jsonFormat2(ThresholdQuantity)
-  implicit val marketSnapshotFormat = jsonFormat4(MarketSnapshot)
+  implicit val thresholdQuantityJsonFormat = jsonFormat2(ThresholdQuantity)
+  implicit val marketSnapshotJsonFormat = jsonFormat4(MarketSnapshot)
+
+  implicit val errorJsonFormat = jsonFormat1(Error)
 
 }

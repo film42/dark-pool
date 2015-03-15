@@ -80,7 +80,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
     def trade(price: Double): Option[Trade] = {
       marketReferencePrice = Some(price)
       val (buy, sell) = if (order.orderType.isInstanceOf[Buy]) (order, top) else (top, order)
-      Some(Trade(buy.accountId, sell.accountId, buy.id, sell.id, price, math.min(buy.quantity, sell.quantity)))
+      Some(Trade(UUID.randomUUID(), buy.accountId, sell.accountId, buy.id, sell.id, price, math.min(buy.quantity, sell.quantity)))
     }
 
     lazy val oppositeBestLimit: Option[Double] = {
