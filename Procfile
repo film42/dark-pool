@@ -1,1 +1,1 @@
-web: sbt run darkpool.server.WebServer
+web: target/universal/stage/bin/dark-pool
