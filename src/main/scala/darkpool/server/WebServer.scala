@@ -77,5 +77,5 @@ object WebServer extends App {
   val serverPort = Properties.envOrElse("PORT", "8080").toInt
   println(s"Starting server on port: $serverPort")
 
-  IO(Http) ? Http.Bind(service, interface = "localhost", port = serverPort)
+  IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = serverPort)
 }
