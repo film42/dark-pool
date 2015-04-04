@@ -11,7 +11,7 @@ object LedgerDatastore {
   var trades = List[Trade]()
 
   def save(trade: Trade) {
-    trades = trades :+ trade
+    trades = List(trade) ++ trades
   }
 
   def all: List[Trade] = trades
