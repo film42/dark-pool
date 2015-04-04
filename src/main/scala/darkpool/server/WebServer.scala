@@ -29,7 +29,6 @@ object WebServer extends App {
     private def randomQuantity = random.nextInt(100) + 1
 
     def randomOrder: Order = {
-      val orderSwitch = random.nextInt(100)
       val sideSwitch = random.nextInt(100)
 
       // Pick a Side
@@ -39,16 +38,11 @@ object WebServer extends App {
         SellOrder
       }
 
-      // Pick an order
-      if(orderSwitch % 2 == 0) {
-        MarketOrder(side, randomQuantity, UUID.randomUUID(), UUID.randomUUID())
-      } else {
-        LimitOrder(side, randomQuantity, randomThreshold, UUID.randomUUID(), UUID.randomUUID())
-      }
+      // Always use limit orders for now
+      LimitOrder(side, randomQuantity, randomThreshold, UUID.randomUUID(), UUID.randomUUID())
     }
   }
-
-
+  
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("dark-pool-server")
