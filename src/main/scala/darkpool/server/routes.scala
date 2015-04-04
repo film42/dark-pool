@@ -2,18 +2,22 @@ package darkpool.server
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorSelection}
+import akka.actor.{ActorLogging, Actor, ActorSelection}
 import akka.pattern.ask
 import akka.util.Timeout
 import darkpool.datastore.LedgerDatastore
 import darkpool.engine.commands._
 import darkpool.models._
-
+import darkpool.models.orders.Order
 import spray.http.MediaTypes._
-import spray.routing.{HttpService, RequestContext}
+import spray.http.StatusCodes
+import spray.routing
+import spray.routing.{StandardRoute, HttpService, RequestContext}
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
 /**
@@ -21,7 +25,8 @@ import scala.util.{Failure, Success}
  */
 
 package object routes {
-  import TradingJsonProtocol._
+  import darkpool.models.TradingJsonProtocol._
+  import spray.httpx.SprayJsonSupport._
   import spray.json._
 
   trait ApiService extends HttpService {
@@ -30,15 +35,24 @@ package object routes {
 
     val jsonResponse = respondWithMediaType(`application/json`)
 
-    def responseFromActor[A](actorName: String, message: Any)(implicit ctx: RequestContext) = {
-      ask(actorWithName("engine"), Snapshot)
-        .mapTo[MarketSnapshot]
-        .onComplete {
+    def completeFromActor[A](actorName: String, message: Any)(implicit ctx: RequestContext, tag: ClassTag[A]) = {
+      responseFromActor[A, Unit](actorName, message) { json =>
+        ctx.complete(json)
+      }
+    }
 
-        case Success(marketSnapshot) =>
-          ctx.complete(marketSnapshot.toJson.toString())
-        case Failure(ex) =>
-          ctx.complete(Error(ex.getMessage).toJson.toString())
+    def responseFromActor[A, B](actorName: String, message: Any)(f: (String => B))(implicit tag: ClassTag[A]): B = {
+      val blockingResult = Await.result(ask(actorWithName("engine"), message).mapTo[A], 5 seconds)
+
+      blockingResult match {
+        case marketSnapshot: MarketSnapshot =>
+          f(marketSnapshot.toJson.toString())
+        case OrderAdded =>
+          f(OrderAdded.toJson.toString())
+        case OrderNotAdded =>
+          f(OrderNotAdded.toJson.toString())
+        case ex: String =>
+          f(Error(ex).toJson.toString())
       }
     }
 
@@ -48,7 +62,7 @@ package object routes {
 
       path("snapshot") {
         get { implicit ctx =>
-          responseFromActor[MarketSnapshot]("engine", Snapshot)
+          completeFromActor[MarketSnapshot]("engine", Snapshot)
         }
 
       } ~
@@ -62,6 +76,15 @@ package object routes {
           get {
             complete {
               s"""{"test" : "$userId"}"""
+            }
+          }
+        } ~
+        path("add") {
+          post {
+            entity(as[Order]) { order =>
+              responseFromActor[AddOrderResponse, StandardRoute]("engine", Add(order)) { json =>
+                complete { json }
+              }
             }
           }
         }

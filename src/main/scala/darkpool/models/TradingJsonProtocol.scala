@@ -2,8 +2,9 @@ package darkpool.models
 
 import java.util.UUID
 
-import darkpool.engine.commands.MarketSnapshot
+import darkpool.engine.commands.{OrderAdded, OrderNotAdded, MarketSnapshot}
 import darkpool.models.common.ThresholdQuantity
+import darkpool.models.orders._
 import spray.json._
 
 /**
@@ -15,9 +16,51 @@ case class Error(error: String)
 object TradingJsonProtocol extends DefaultJsonProtocol {
 
   implicit object UuidJsonFormat extends RootJsonFormat[UUID] {
-    override def read(json: JsValue): UUID = UUID.fromString(json.toString())
+    override def read(json: JsValue): UUID = {
+      val toRemove = "\"".toSet
+      val cleanUuidString = json.toString().filterNot(toRemove)
+      UUID.fromString(cleanUuidString)
+    }
 
     override def write(obj: UUID): JsValue = JsString(obj.toString)
+  }
+
+  implicit object OrderTypeFormat extends RootJsonFormat[OrderType] {
+    override def read(json: JsValue): OrderType = json match {
+      case JsString("buy") => BuyOrder
+      case JsString("sell") => SellOrder
+    }
+    override def write(obj: OrderType): JsValue = obj match {
+      case BuyOrder => JsString("buy")
+      case SellOrder => JsString("sell")
+    }
+  }
+
+  implicit object OrderFormat extends RootJsonFormat[Order] {
+    override def read(json: JsValue): Order = {
+      val hasThreshold = json.asJsObject.fields.contains("orderThreshold")
+      if(hasThreshold) {
+        json.convertTo[LimitOrder]
+      } else {
+        json.convertTo[MarketOrder]
+      }
+    }
+    override def write(obj: Order): JsValue = obj match {
+      case o: LimitOrder =>
+        o.toJson
+      case o: MarketOrder =>
+        o.toJson
+    }
+  }
+
+  implicit object OrderAddedFormat extends RootJsonFormat[OrderAdded.type] {
+    override def read(json: JsValue): OrderAdded.type = ???
+    override def write(obj: OrderAdded.type): JsValue = JsObject("status" -> JsString("Order Added"))
+  }
+
+  implicit object OrderNotAddedFormat extends RootJsonFormat[OrderNotAdded.type] {
+    override def read(json: JsValue): OrderNotAdded.type = ???
+    override def write(obj: OrderNotAdded.type): JsValue = JsObject("status" -> JsString("Order Not Addded"))
   }
 
   implicit val tradeJsonFormat = jsonFormat7(Trade)
@@ -26,5 +69,8 @@ object TradingJsonProtocol extends DefaultJsonProtocol {
   implicit val marketSnapshotJsonFormat = jsonFormat4(MarketSnapshot)
 
   implicit val errorJsonFormat = jsonFormat1(Error)
+
+  implicit val limitOrderJsonFormat = jsonFormat5(LimitOrder)
+  implicit val marketOrderJsonFormat = jsonFormat4(MarketOrder)
 
 }
