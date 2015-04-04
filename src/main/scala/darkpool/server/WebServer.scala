@@ -1,7 +1,6 @@
 package darkpool.server
 
 import java.util.UUID
-
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
@@ -10,7 +9,9 @@ import darkpool.actors.{LedgerActor, MatchingEngineActor, QueryActor}
 import darkpool.book.OrderBook
 import darkpool.engine.commands.Add
 import darkpool.models.orders._
+import darkpool.tools.RobotTrader.{TradeGenerator, GenerateOrder}
 import spray.can.Http
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -42,7 +43,7 @@ object WebServer extends App {
       LimitOrder(side, randomQuantity, randomThreshold, UUID.randomUUID(), UUID.randomUUID())
     }
   }
-  
+
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("dark-pool-server")
@@ -56,6 +57,7 @@ object WebServer extends App {
   val engineActor = system.actorOf(Props(new MatchingEngineActor(orderBookBuy, orderBookSell)), "engine")
   val apiActor = system.actorOf(Props[QueryActor], "api")
   val ledgerActor = system.actorOf(Props[LedgerActor], "ledger")
+  val tradeGeneratorActor = system.actorOf(Props[TradeGenerator], "robot")
 
 
   // TODO: Remove
@@ -63,6 +65,14 @@ object WebServer extends App {
     engineActor ! Add(TradeGenerator.randomOrder)
   }
 
+
+  Properties.envOrNone("ROBOT_TRADER") match {
+    case Some(_) =>
+      println("Starting robot trader!")
+      system.scheduler.schedule(1 second, 500 milliseconds, tradeGeneratorActor, GenerateOrder)
+    case _ =>
+      println("Skipping robot trader!")
+  }
 
   // timeout default
   implicit val timeout = Timeout(5.seconds)
