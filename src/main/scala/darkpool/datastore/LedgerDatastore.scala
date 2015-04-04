@@ -22,4 +22,9 @@ object LedgerDatastore {
   def find(tradeId: UUID): Option[Trade] =
     trades.find(_.tradeId == tradeId)
 
+  def filterByAccountId(accountId: UUID): List[Trade] =
+    trades.filter { trade =>
+      trade.buyerId == accountId || trade.sellerId == accountId
+    }
+
 }

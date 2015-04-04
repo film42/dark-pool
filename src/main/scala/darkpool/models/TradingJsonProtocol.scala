@@ -2,7 +2,7 @@ package darkpool.models
 
 import java.util.UUID
 
-import darkpool.engine.commands.{OrderAdded, OrderNotAdded, MarketSnapshot}
+import darkpool.engine.commands._
 import darkpool.models.common.ThresholdQuantity
 import darkpool.models.orders._
 import spray.json._
@@ -63,6 +63,19 @@ object TradingJsonProtocol extends DefaultJsonProtocol {
     override def write(obj: OrderNotAdded.type): JsValue = JsObject("status" -> JsString("Order Not Addded"))
   }
 
+  implicit object OrderCanceledFormat extends RootJsonFormat[OrderCanceled] {
+    override def read(json: JsValue): OrderCanceled = ???
+    override def write(obj: OrderCanceled): JsValue = {
+      JsObject("status" -> JsString("Order Canceled"),
+               "remainingOrder" -> obj.remainingOrder.toJson)
+    }
+  }
+
+  implicit object OrderNotCanceledFormat extends RootJsonFormat[OrderNotCanceled.type] {
+    override def read(json: JsValue): OrderNotCanceled.type = ???
+    override def write(obj: OrderNotCanceled.type): JsValue = JsObject("status" -> JsString("Order Not Canceled"))
+  }
+
   implicit val tradeJsonFormat = jsonFormat7(Trade)
 
   implicit val thresholdQuantityJsonFormat = jsonFormat2(ThresholdQuantity)
@@ -72,5 +85,8 @@ object TradingJsonProtocol extends DefaultJsonProtocol {
 
   implicit val limitOrderJsonFormat = jsonFormat5(LimitOrder)
   implicit val marketOrderJsonFormat = jsonFormat4(MarketOrder)
+
+  implicit val ordersForAccountFormat = jsonFormat1(OrdersForAccount)
+  implicit val ordersForAccountResponseFormat = jsonFormat1(OrdersForAccountResponse)
 
 }

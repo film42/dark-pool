@@ -42,6 +42,7 @@ package object routes {
     }
 
     def responseFromActor[A, B](actorName: String, message: Any)(f: (String => B))(implicit tag: ClassTag[A]): B = {
+      // This is terrible because we're now blocking the future
       val blockingResult = Await.result(ask(actorWithName("engine"), message).mapTo[A], 5 seconds)
 
       blockingResult match {
@@ -51,6 +52,12 @@ package object routes {
           f(OrderAdded.toJson.toString())
         case OrderNotAdded =>
           f(OrderNotAdded.toJson.toString())
+        case o: OrderCanceled =>
+          f(o.toJson.toString())
+        case OrderNotCanceled =>
+          f(OrderNotCanceled.toJson.toString())
+        case orderForAccountResponse: OrdersForAccountResponse =>
+          f(orderForAccountResponse.toJson.toString())
         case ex: String =>
           f(Error(ex).toJson.toString())
       }
@@ -64,7 +71,6 @@ package object routes {
         get { implicit ctx =>
           completeFromActor[MarketSnapshot]("engine", Snapshot)
         }
-
       } ~
       pathPrefix("orders") {
         pathEndOrSingleSlash {
@@ -72,17 +78,25 @@ package object routes {
             entity(as[String]) { complete(_) }
           }
         } ~
-        path(Segment) { userId =>
-          get {
-            complete {
-              s"""{"test" : "$userId"}"""
-            }
+        path("account" / Segment) { accountId =>
+          get { implicit ctx =>
+            val uuid = UUID.fromString(accountId)
+            completeFromActor[OrdersForAccountResponse]("engine", OrdersForAccount(uuid))
           }
         } ~
         path("add") {
           post {
             entity(as[Order]) { order =>
               responseFromActor[AddOrderResponse, StandardRoute]("engine", Add(order)) { json =>
+                complete { json }
+              }
+            }
+          }
+        } ~
+        path("cancel") {
+          post {
+            entity(as[Order]) { order =>
+              responseFromActor[CancelOrderResponse, StandardRoute]("engine", Cancel(order)) { json =>
                 complete { json }
               }
             }
@@ -97,16 +111,24 @@ package object routes {
             }
           }
         } ~
-        path(Segment) { someId =>
+        path("account" / Segment) { accountId =>
           get {
-            val uuid = UUID.fromString(someId)
+            parameters('limit ? 100)  { limitParameter =>
+              val uuid = UUID.fromString(accountId)
+              complete(LedgerDatastore.filterByAccountId(uuid).toJson.toString())
+            }
+          }
+        } ~
+        path(Segment) { orderId =>
+          get {
+            val uuid = UUID.fromString(orderId)
             val optionTrade = LedgerDatastore.find(uuid)
 
             optionTrade match {
               case Some(trade) =>
                 complete(trade.toJson.toString())
               case None =>
-                complete(Error(s"No such trade with id $someId").toJson.toString())
+                complete(Error(s"No such trade with id $orderId").toJson.toString())
             }
           }
         }

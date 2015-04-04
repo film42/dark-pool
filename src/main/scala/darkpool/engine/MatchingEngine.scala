@@ -70,7 +70,7 @@ class MatchingEngine(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook[Sell
       referencePrice)
   }
 
-  private def ordersForAccountId(accountId: UUID): List[Order] = {
+  def ordersForAccountId(accountId: UUID): List[Order] = {
     buyOrderBook.ordersForAccountId(accountId) ++ sellOrderBook.ordersForAccountId(accountId)
   }
 
