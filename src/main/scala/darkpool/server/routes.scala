@@ -115,7 +115,7 @@ package object routes {
           get {
             parameters('limit ? 100)  { limitParameter =>
               val uuid = UUID.fromString(accountId)
-              complete(LedgerDatastore.filterByAccountId(uuid).toJson.toString())
+              complete(LedgerDatastore.filterByAccountId(uuid).take(limitParameter).toJson.toString())
             }
           }
         } ~
