@@ -1,5 +1,7 @@
 package darkpool.actors
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging}
 import darkpool.book.OrderBook
 import darkpool.engine.MatchingEngine
@@ -31,6 +33,11 @@ class MatchingEngineActor(buyOrderBook: OrderBook[Buy], sellOrderBook: OrderBook
           log.info(s"Cannot cancel order: $order")
           sender ! OrderNotCanceled
       }
+
+
+    case OrdersForAccount(accountId) =>
+      log.info(s"Getting orders list for accountId: ${accountId.toString}")
+      sender ! OrdersForAccountResponse(ordersForAccountId(accountId))
 
     case Snapshot =>
       log.info(s"Generating market snapshot")
